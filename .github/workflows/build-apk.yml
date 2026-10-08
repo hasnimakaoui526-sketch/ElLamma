@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'ElLamma_Release_v1.zip'
+      - 'ElLamma_Release_v2.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
       - name: Extract Android project
         run: |
           mkdir buildsrc
-          unzip -q ElLamma_Release_v1.zip -d buildsrc
+          unzip -q ElLamma_Release_v2.zip -d buildsrc
           cp -R buildsrc/app .
           cp buildsrc/build.gradle .
           cp buildsrc/settings.gradle .

@@ -27,6 +27,64 @@ jobs:
           cp buildsrc/settings.gradle .
           cp buildsrc/gradle.properties .
 
+      - name: Fix API and Logout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path("buildsrc/app/src/main/assets/el-lamma-chat.html")
+          s = p.read_text(encoding="utf-8")
+
+          s = re.sub(
+              r"""const API=['"][^'"]+['"]""",
+              "const API='https://bfbzgzletoaxyazugjex.supabase.co/functions/v1/api'",
+              s,
+              count=1
+          )
+
+          s = s.replace(
+              "let LOCAL_MODE=DIRECT_FILE;",
+              "let LOCAL_MODE=false;"
+          )
+
+          s = s.replace(
+              ".bottom.registration-hidden #bottomLogout{display:none!important}",
+              ".bottom.registration-hidden #bottomLogout{display:flex!important}"
+          )
+
+          old_logout = """$('bottomLogout').onclick=()=>{
+  const u=currentUser();
+  if(u&&u.guest!==true)return;
+  showLogin();
+  $('authChoice').classList.add('hidden');
+  $('registerPanel').classList.add('show');
+  $('registerError').textContent='';
+  $('registerName').focus()
+};"""
+
+          new_logout = """$('bottomLogout').onclick=()=>{
+  logout()
+};"""
+
+          if old_logout in s:
+              s = s.replace(old_logout, new_logout, 1)
+
+          old_function = """async function logout(){
+  try{"""
+
+          new_function = """async function logout(){
+  if(!confirm('هل تريد تسجيل الخروج من هذا الحساب؟'))return;
+  try{"""
+
+          if old_function in s:
+              s = s.replace(old_function, new_function, 1)
+
+          p.write_text(s, encoding="utf-8")
+
+          print("API and logout patch applied successfully.")
+          PY
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -57,6 +115,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: el-lamma-apk-v9
+          name: el-lamma-apk-logout-fix
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
